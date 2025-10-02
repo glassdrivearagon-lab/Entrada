@@ -3,536 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Recepción GlassDrive - Multi-taller</title>
+    <title>Recepción GlassDrive - Sistema Multi-taller</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- 
-    INSTALACIÓN EN SERVIDOR - PASOS SIMPLES:
-    
-    1. Descargar los archivos: index.html, style.css, app.js
-    2. Subir a carpeta web del servidor (ej: public_html, www, htdocs)
-    3. Configurar servidor web (Apache/Nginx) para servir archivos estáticos
-    4. Abrir navegador y acceder a la URL del servidor
-    5. ¡Listo! No requiere base de datos ni backend
-    
-    CONFIGURACIÓN MÍNIMA APACHE (.htaccess):
-    RewriteEngine On
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^(.*)$ index.html [QSA,L]
-    
-    CONFIGURACIÓN NGINX:
-    location / {
-        try_files $uri $uri/ /index.html;
-        add_header Cache-Control "no-cache, must-revalidate";
-    }
-    
-    CARACTERÍSTICAS:
-    - Sistema completo funciona offline después de primera carga
-    - Datos se guardan en localStorage del navegador
-    - OCR real con Tesseract.js para extraer matrículas y documentos
-    - Sistema multi-taller con usuarios por centro
-    - Búsqueda avanzada por matrícula/nombre entre todos los talleres
-    - Organización automática de expedientes por carpetas/talleres
-    -->
+    <!-- Tesseract.js para OCR -->
+    <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
+    <!-- PDF.js para procesar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
-    <!-- Sistema de Login Multi-taller -->
-    <div id="loginScreen" class="login-screen">
+    <!-- Pantalla de Login -->
+    <div id="loginScreen" class="login-screen active">
         <div class="login-container">
             <div class="login-header">
                 <div class="glassdrive-logo-login">
-                    <i class="fas fa-shield-alt"></i>
-                    <span class="brand-text-login">
-                        <span class="brand-name">GlassDrive</span>
-                        <span class="app-name">Sistema Multi-taller</span>
-                    </span>
+                    <img src="logo-largo-1-2.jpeg" alt="GlassDrive" class="logo-img">
+                    <div class="brand-text-login">
+                        <h1 class="brand-name">GlassDrive</h1>
+                        <p class="app-name">Sistema Multi-taller</p>
+                    </div>
                 </div>
-                <p class="login-subtitle">Seleccione su taller y usuario para continuar</p>
+                <p class="tagline">Seleccione su taller y usuario para continuar</p>
             </div>
-            
-            <div class="login-form">
+
+            <form class="login-form" id="loginForm">
                 <div class="form-group">
-                    <label class="form-label">Taller GlassDrive</label>
-                    <select class="form-control" id="loginTaller" required>
-                        <option value="">Seleccionar taller...</option>
+                    <label for="selectTaller">Taller GlassDrive</label>
+                    <select id="selectTaller" required>
+                        <option value="">Seleccione su taller...</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
-                    <label class="form-label">Nombre de Usuario</label>
-                    <input type="text" class="form-control" id="loginUsuario" placeholder="Ej: María González" required>
+                    <label for="inputUsuario">Nombre de Usuario</label>
+                    <input type="text" id="inputUsuario" placeholder="Ingrese su nombre" required>
                 </div>
-                
-                <button class="btn btn--primary btn--full-width" id="btnIniciarSesion">
+
+                <button type="submit" class="btn-login">
                     <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
                 </button>
-                
-                <div class="login-info">
-                    <p><i class="fas fa-info-circle"></i> El sistema permite consultar expedientes de TODOS los talleres de la red</p>
+
+                <div class="info-note">
+                    <i class="fas fa-info-circle"></i>
+                    El sistema permite consultar expedientes de TODOS los talleres de la red
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 
     <!-- Aplicación Principal -->
-    <div id="mainApp" class="main-app hidden">
-        <!-- Navbar con información del usuario -->
-        <nav class="navbar">
-            <div class="navbar-brand">
-                <div class="glassdrive-logo">
-                    <i class="fas fa-shield-alt"></i>
-                    <span class="brand-text">
-                        <span class="brand-name">GlassDrive</span>
-                        <span class="app-name">Multi-taller</span>
-                    </span>
-                </div>
-                <div class="user-info">
-                    <span id="usuarioActual">Usuario</span> - <span id="tallerActual">Taller</span>
+    <div id="mainApp" class="main-app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-brand">
+                <img src="logo-largo-1-2.jpeg" alt="GlassDrive" class="header-logo">
+                <div class="header-text">
+                    <h1>GlassDrive Recepción</h1>
+                    <div class="user-info" id="userInfo">Usuario - Taller</div>
                 </div>
             </div>
-            <div class="navbar-actions">
-                <button class="btn btn--primary" id="btnNuevoRegistro">
-                    <i class="fas fa-plus"></i> Nuevo Vehículo
+            <div class="header-actions">
+                <button class="btn btn-primary" id="btnNuevoRegistro">
+                    <i class="fas fa-plus"></i> Nuevo Registro
                 </button>
-                <button class="btn btn--secondary" id="btnCerrarSesion">
-                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                <button class="btn btn-secondary" id="btnBusqueda">
+                    <i class="fas fa-search"></i> Búsqueda
+                </button>
+                <button class="btn btn-logout" id="btnLogout">
+                    <i class="fas fa-sign-out-alt"></i> Salir
                 </button>
             </div>
-        </nav>
+        </header>
 
-        <!-- Contenedor Principal -->
-        <div class="main-container">
-            <!-- Sidebar -->
-            <aside class="sidebar">
-                <nav class="sidebar-nav">
-                    <a href="#" class="nav-link active" data-section="dashboard">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <a href="#" class="nav-link" data-section="expedientes">
-                        <i class="fas fa-folder-open"></i>
-                        <span>Expedientes</span>
-                    </a>
-                    <a href="#" class="nav-link" data-section="busqueda">
-                        <i class="fas fa-search"></i>
-                        <span>Búsqueda Global</span>
-                    </a>
-                    <a href="#" class="nav-link" data-section="talleres">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Red de Talleres</span>
-                    </a>
-                    <a href="#" class="nav-link" data-section="carpetas">
-                        <i class="fas fa-folder-tree"></i>
-                        <span>Organización</span>
-                    </a>
-                </nav>
-            </aside>
+        <!-- Dashboard -->
+        <div id="dashboard" class="content-section active">
+            <div class="dashboard-header">
+                <h2>Panel Principal</h2>
+                <p>Gestión de vehículos y expedientes - Red GlassDrive</p>
+            </div>
 
-            <!-- Contenido Principal -->
-            <main class="main-content">
-                <!-- Dashboard -->
-                <section id="dashboard" class="content-section active">
-                    <div class="section-header">
-                        <h1>Dashboard Multi-taller</h1>
-                        <p>Vista unificada de todos los talleres GlassDrive</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-car"></i>
                     </div>
-
-                    <!-- Stats Generales -->
-                    <div class="stats-grid">
-                        <div class="stat-card glassdrive-blue">
-                            <div class="stat-icon">
-                                <i class="fas fa-car"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="totalVehiculos">0</h3>
-                                <p>Total Red GlassDrive</p>
-                            </div>
-                        </div>
-                        <div class="stat-card glassdrive-red">
-                            <div class="stat-icon">
-                                <i class="fas fa-calendar-day"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="ingresosHoy">0</h3>
-                                <p>Ingresos Hoy</p>
-                            </div>
-                        </div>
-                        <div class="stat-card glassdrive-light">
-                            <div class="stat-icon">
-                                <i class="fas fa-tools"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="enReparacion">0</h3>
-                                <p>En Proceso</p>
-                            </div>
-                        </div>
-                        <div class="stat-card glassdrive-success">
-                            <div class="stat-icon">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <div class="stat-content">
-                                <h3 id="completados">0</h3>
-                                <p>Completados</p>
-                            </div>
-                        </div>
+                    <div class="stat-info">
+                        <h3 id="totalVehiculos">0</h3>
+                        <p>Vehículos Registrados</p>
                     </div>
+                </div>
 
-                    <!-- Búsqueda Rápida -->
-                    <div class="quick-search">
-                        <h2>Búsqueda Rápida Multi-taller</h2>
-                        <div class="search-box-main">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="quickSearch" placeholder="Buscar por matrícula o nombre en TODA la red...">
-                            <button class="btn btn--primary" id="btnQuickSearch">Buscar</button>
-                        </div>
-                        <div id="quickSearchResults" class="quick-results"></div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-day"></i>
                     </div>
-
-                    <!-- Actividad Reciente -->
-                    <div class="recent-section">
-                        <h2>Actividad Reciente por Talleres</h2>
-                        <div id="recentVehicles" class="vehicle-grid"></div>
+                    <div class="stat-info">
+                        <h3 id="registrosHoy">0</h3>
+                        <p>Registros Hoy</p>
                     </div>
-                </section>
+                </div>
 
-                <!-- Expedientes -->
-                <section id="expedientes" class="content-section">
-                    <div class="section-header">
-                        <h1>Expedientes por Talleres</h1>
-                        <div class="section-actions">
-                            <div class="search-box">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="searchExpedientes" placeholder="Buscar expedientes...">
-                            </div>
-                            <div class="filter-box">
-                                <select class="form-control" id="filterByTaller">
-                                    <option value="">Todos los talleres</option>
-                                </select>
-                            </div>
-                        </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tools"></i>
                     </div>
-
-                    <div id="expedientesList" class="expedientes-list"></div>
-                </section>
-
-                <!-- Búsqueda Global -->
-                <section id="busqueda" class="content-section">
-                    <div class="section-header">
-                        <h1>Búsqueda Global Multi-taller</h1>
-                        <p>Busque en TODA la red de talleres GlassDrive</p>
+                    <div class="stat-info">
+                        <h3 id="enProceso">0</h3>
+                        <p>En Proceso</p>
                     </div>
+                </div>
 
-                    <div class="search-filters">
-                        <div class="filter-row">
-                            <div class="form-group">
-                                <label class="form-label">Matrícula</label>
-                                <input type="text" class="form-control" id="filterMatricula" placeholder="Ej: 1234ABC">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Cliente</label>
-                                <input type="text" class="form-control" id="filterCliente" placeholder="Nombre del cliente">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Taller</label>
-                                <select class="form-control" id="filterTaller">
-                                    <option value="">Todos los talleres</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Servicio</label>
-                                <select class="form-control" id="filterServicio">
-                                    <option value="">Todos los servicios</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="filter-actions">
-                            <button class="btn btn--primary" id="btnBuscar">
-                                <i class="fas fa-search"></i> Buscar en Toda la Red
-                            </button>
-                            <button class="btn btn--secondary" id="btnLimpiarFiltros">
-                                <i class="fas fa-eraser"></i> Limpiar
-                            </button>
-                        </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
                     </div>
-
-                    <div id="resultadosBusqueda" class="search-results"></div>
-                </section>
-
-                <!-- Red de Talleres -->
-                <section id="talleres" class="content-section">
-                    <div class="section-header">
-                        <h1>Red de Talleres GlassDrive</h1>
-                        <p>Vista general de todos los centros especializados</p>
+                    <div class="stat-info">
+                        <h3 id="completados">0</h3>
+                        <p>Completados</p>
                     </div>
+                </div>
+            </div>
 
-                    <div id="talleresList" class="talleres-grid"></div>
-                </section>
-
-                <!-- Organización por Carpetas -->
-                <section id="carpetas" class="content-section">
-                    <div class="section-header">
-                        <h1>Organización por Carpetas</h1>
-                        <p>Estructura jerárquica de expedientes por taller</p>
-                    </div>
-
-                    <div class="carpetas-structure">
-                        <div class="structure-header">
-                            <h3><i class="fas fa-folder"></i> /expedientes-glassdrive/</h3>
-                        </div>
-                        <div id="carpetasContent" class="carpetas-content"></div>
-                    </div>
-                </section>
-            </main>
+            <!-- Últimos registros -->
+            <div class="recent-section">
+                <h3>Últimos Registros</h3>
+                <div id="recentList" class="recent-list">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Modal de Registro -->
-    <div id="modalRegistro" class="modal hidden">
-        <div class="modal-content large">
-            <div class="modal-header">
-                <h2>Registro de Vehículo - <span id="modalTallerName">Taller</span></h2>
-                <button class="modal-close" id="closeModalRegistro">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="wizard-steps">
-                <div class="step active" data-step="1">
-                    <span class="step-number">1</span>
-                    <span class="step-label">Fotografías</span>
-                </div>
-                <div class="step" data-step="2">
-                    <span class="step-number">2</span>
-                    <span class="step-label">Ficha Técnica</span>
-                </div>
-                <div class="step" data-step="3">
-                    <span class="step-number">3</span>
-                    <span class="step-label">Póliza Seguro</span>
-                </div>
+        <!-- Sección de Búsqueda -->
+        <div id="busqueda" class="content-section">
+            <div class="search-header">
+                <h2>Búsqueda de Expedientes</h2>
+                <p>Consulte expedientes de todos los talleres GlassDrive</p>
             </div>
 
-            <div class="modal-body">
-                <!-- Paso 1: Captura de Fotos -->
-                <div class="wizard-step active" id="step1">
-                    <h3>Captura de Fotografías del Vehículo</h3>
-                    <p class="step-description">Capture múltiples fotos del vehículo. El sistema extraerá automáticamente la matrícula de la foto frontal.</p>
-                    
-                    <div class="photos-section">
-                        <div class="camera-controls-main">
-                            <button class="btn btn--primary" id="btnIniciarCamera">
-                                <i class="fas fa-camera"></i> Iniciar Cámara
+            <div class="search-controls">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Buscar por matrícula o nombre de cliente...">
+                    <button id="btnSearch" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
+
+                <div class="search-filters">
+                    <select id="filterTaller">
+                        <option value="">Todos los talleres</option>
+                    </select>
+                    <select id="filterEstado">
+                        <option value="">Todos los estados</option>
+                        <option value="recepcion">Recepción</option>
+                        <option value="diagnostico">Diagnóstico</option>
+                        <option value="reparacion">Reparación</option>
+                        <option value="completado">Completado</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="searchResults" class="search-results">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Modal de Registro -->
+        <div id="registroModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Nuevo Registro de Vehículo</h2>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+
+                <div class="wizard-progress">
+                    <div class="step active" data-step="1">
+                        <span class="step-number">1</span>
+                        <span class="step-title">Fotografías</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <span class="step-number">2</span>
+                        <span class="step-title">Ficha Técnica</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <span class="step-number">3</span>
+                        <span class="step-title">Póliza Seguro</span>
+                    </div>
+                </div>
+
+                <!-- Paso 1: Fotografías -->
+                <div id="step1" class="wizard-step active">
+                    <h3>Paso 1: Fotografías del Vehículo</h3>
+                    <p>Capture múltiples fotos del vehículo. Designe cuál es la foto frontal para extraer la matrícula.</p>
+
+                    <div class="photo-capture">
+                        <div class="camera-section">
+                            <video id="cameraPreview" style="display:none;"></video>
+                            <canvas id="photoCanvas" style="display:none;"></canvas>
+                            <button id="startCamera" class="btn btn-primary">
+                                <i class="fas fa-camera"></i> Activar Cámara
                             </button>
-                            <button class="btn btn--primary hidden" id="btnCapturar">
-                                <i class="fas fa-camera"></i> Capturar Foto
-                            </button>
-                            <button class="btn btn--secondary hidden" id="btnPararCamera">
-                                <i class="fas fa-stop"></i> Parar Cámara
-                            </button>
-                            <button class="btn btn--secondary" id="btnFotosDemo">
-                                <i class="fas fa-images"></i> Usar Fotos Demo
+                            <button id="capturePhoto" class="btn btn-secondary" style="display:none;">
+                                <i class="fas fa-camera-retro"></i> Capturar Foto
                             </button>
                         </div>
 
-                        <div class="camera-preview" id="cameraPreview">
-                            <video id="cameraVideo" autoplay playsinline></video>
-                            <div class="camera-overlay">
-                                <div class="capture-area">
-                                    <p>Posiciona el vehículo dentro del marco</p>
-                                    <small>Foto <span id="photoCounter">1</span> de múltiples</small>
-                                </div>
-                            </div>
+                        <div class="photos-grid" id="photosGrid">
+                            <!-- Fotos capturadas aparecen aquí -->
                         </div>
 
-                        <div class="photos-gallery" id="photosGallery">
-                            <h4>Fotos Capturadas</h4>
-                            <div class="gallery-grid" id="galleryGrid"></div>
+                        <div class="frontal-selector" id="frontalSelector" style="display:none;">
+                            <h4>¿Cuál es la foto frontal con la matrícula?</h4>
+                            <div id="frontalOptions"></div>
                         </div>
 
-                        <div class="ocr-results" id="ocrResults">
-                            <h4>Reconocimiento de Matrícula</h4>
-                            <div class="ocr-progress hidden" id="ocrProgress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="progressFill"></div>
-                                </div>
-                                <p id="progressText">Iniciando OCR...</p>
-                            </div>
-                            <div class="matricula-detected hidden" id="matriculaDetected"></div>
+                        <div class="ocr-results" id="ocrResults" style="display:none;">
+                            <h4>Matrícula Detectada:</h4>
+                            <div class="matricula-result" id="matriculaResult"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Paso 2: Ficha Técnica -->
-                <div class="wizard-step" id="step2">
-                    <h3>Ficha Técnica del Vehículo</h3>
-                    <p class="step-description">Capture o suba la ficha técnica. El sistema extraerá automáticamente los datos del vehículo.</p>
-                    
-                    <div class="document-options">
-                        <div class="option-buttons">
-                            <button class="btn btn--primary" id="btnFotoFicha">
-                                <i class="fas fa-camera"></i> Fotografiar
+                <div id="step2" class="wizard-step">
+                    <h3>Paso 2: Ficha Técnica del Vehículo</h3>
+                    <p>Capture una foto del documento o suba un archivo PDF/imagen.</p>
+
+                    <div class="document-upload">
+                        <div class="upload-options">
+                            <button id="captureDocument" class="btn btn-primary">
+                                <i class="fas fa-camera"></i> Fotografiar Documento
                             </button>
-                            <button class="btn btn--secondary" id="btnArchivoFicha">
-                                <i class="fas fa-file-upload"></i> Subir Archivo
-                            </button>
-                            <button class="btn btn--secondary" id="btnDemoFicha">
-                                <i class="fas fa-magic"></i> Datos Demo
+                            <input type="file" id="uploadDocument" accept="image/*,application/pdf" style="display:none;">
+                            <button id="selectDocument" class="btn btn-secondary">
+                                <i class="fas fa-upload"></i> Subir Archivo
                             </button>
                         </div>
 
-                        <div class="upload-section-ficha" id="uploadSectionFicha">
-                            <div class="upload-area" id="uploadFichaTecnica">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>Arrastra la ficha técnica aquí o haz clic</p>
-                                <small>PDF, JPG, PNG (máx 10MB)</small>
-                                <input type="file" id="fileFichaTecnica" accept=".pdf,.jpg,.jpeg,.png" hidden>
-                            </div>
+                        <div class="document-preview" id="documentPreview" style="display:none;">
+                            <!-- Vista previa del documento -->
                         </div>
 
-                        <div class="processing-ficha hidden" id="processingFicha">
-                            <div class="processing-indicator">
-                                <div class="processing-spinner"></div>
-                                <p>Procesando ficha técnica...</p>
-                            </div>
-                        </div>
-
-                        <div class="extracted-data-ficha hidden" id="extractedDataFicha">
-                            <h4>Datos Extraídos</h4>
-                            <div class="data-grid" id="fichaDataGrid"></div>
-                            
-                            <!-- Formulario de Cliente y Vehículo -->
-                            <div class="client-vehicle-forms">
-                                <div class="form-section">
-                                    <h5>Información del Cliente</h5>
-                                    <div class="form-grid">
-                                        <div class="form-group">
-                                            <label class="form-label">Nombre Completo *</label>
-                                            <input type="text" class="form-control" id="clienteNombre" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Teléfono *</label>
-                                            <input type="tel" class="form-control" id="clienteTelefono" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Email</label>
-                                            <input type="email" class="form-control" id="clienteEmail">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-section">
-                                    <h5>Servicio GlassDrive</h5>
-                                    <div class="form-grid">
-                                        <div class="form-group">
-                                            <label class="form-label">Matrícula</label>
-                                            <input type="text" class="form-control" id="vehiculoMatricula" readonly>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">Servicio *</label>
-                                            <select class="form-control" id="servicioGlassDrive" required>
-                                                <option value="">Seleccionar servicio...</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group full-width">
-                                            <label class="form-label">Observaciones</label>
-                                            <textarea class="form-control" id="observacionesTecnico" rows="3" placeholder="Descripción del problema, tipo de daño, etc."></textarea>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="extracted-data" id="extractedTechnicalData" style="display:none;">
+                            <h4>Datos Extraídos:</h4>
+                            <div class="data-grid" id="technicalDataGrid">
+                                <!-- Datos técnicos extraídos -->
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Paso 3: Póliza de Seguro -->
-                <div class="wizard-step" id="step3">
-                    <h3>Póliza de Seguro</h3>
-                    <p class="step-description">Opcional: Capture o suba la póliza para extraer datos del seguro automáticamente.</p>
-                    
-                    <div class="document-options">
-                        <div class="option-buttons">
-                            <button class="btn btn--primary" id="btnFotoPoliza">
-                                <i class="fas fa-camera"></i> Fotografiar
+                <div id="step3" class="wizard-step">
+                    <h3>Paso 3: Póliza de Seguro</h3>
+                    <p>Capture una foto de la póliza o suba un archivo PDF/imagen.</p>
+
+                    <div class="document-upload">
+                        <div class="upload-options">
+                            <button id="capturePolicy" class="btn btn-primary">
+                                <i class="fas fa-camera"></i> Fotografiar Póliza
                             </button>
-                            <button class="btn btn--secondary" id="btnArchivoPoliza">
-                                <i class="fas fa-file-upload"></i> Subir Archivo
-                            </button>
-                            <button class="btn btn--secondary" id="btnDemoPoliza">
-                                <i class="fas fa-magic"></i> Datos Demo
-                            </button>
-                            <button class="btn btn--outline" id="btnSaltarPoliza">
-                                <i class="fas fa-forward"></i> Saltar (Opcional)
+                            <input type="file" id="uploadPolicy" accept="image/*,application/pdf" style="display:none;">
+                            <button id="selectPolicy" class="btn btn-secondary">
+                                <i class="fas fa-upload"></i> Subir Archivo
                             </button>
                         </div>
 
-                        <div class="upload-section-poliza" id="uploadSectionPoliza">
-                            <div class="upload-area" id="uploadPoliza">
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <p>Arrastra la póliza aquí o haz clic</p>
-                                <small>PDF, JPG, PNG (máx 10MB)</small>
-                                <input type="file" id="filePoliza" accept=".pdf,.jpg,.jpeg,.png" hidden>
+                        <div class="document-preview" id="policyPreview" style="display:none;">
+                            <!-- Vista previa de la póliza -->
+                        </div>
+
+                        <div class="extracted-data" id="extractedPolicyData" style="display:none;">
+                            <h4>Datos de la Póliza:</h4>
+                            <div class="data-grid" id="policyDataGrid">
+                                <!-- Datos de la póliza extraídos -->
                             </div>
-                        </div>
-
-                        <div class="processing-poliza hidden" id="processingPoliza">
-                            <div class="processing-indicator">
-                                <div class="processing-spinner"></div>
-                                <p>Procesando póliza de seguro...</p>
-                            </div>
-                        </div>
-
-                        <div class="extracted-data-poliza hidden" id="extractedDataPoliza">
-                            <h4>Datos de Seguro Extraídos</h4>
-                            <div class="data-grid" id="polizaDataGrid"></div>
-                            <div class="validation-alerts" id="validationAlerts"></div>
-                        </div>
-
-                        <div class="final-summary" id="finalSummary">
-                            <h4>Resumen del Expediente</h4>
-                            <div class="summary-content" id="summaryContent"></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="modal-footer">
-                <button class="btn btn--secondary" id="btnPrevStep">
-                    <i class="fas fa-arrow-left"></i> Anterior
-                </button>
-                <button class="btn btn--primary" id="btnNextStep">
-                    Siguiente <i class="fas fa-arrow-right"></i>
-                </button>
-                <button class="btn btn--primary hidden" id="btnCrearExpediente">
-                    <i class="fas fa-save"></i> Crear Expediente
-                </button>
+                <div class="modal-footer">
+                    <button id="prevStep" class="btn btn-secondary" style="display:none;">
+                        <i class="fas fa-arrow-left"></i> Anterior
+                    </button>
+                    <button id="nextStep" class="btn btn-primary">
+                        Siguiente <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button id="finishRegistro" class="btn btn-success" style="display:none;">
+                        <i class="fas fa-check"></i> Finalizar Registro
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Expediente -->
+        <div id="expedienteModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2 id="expedienteTitulo">Expediente</h2>
+                    <button class="modal-close" id="closeExpedienteModal">&times;</button>
+                </div>
+                <div id="expedienteContent" class="expediente-content">
+                    <!-- Contenido del expediente se llena dinámicamente -->
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal para Ver Expediente -->
-    <div id="modalExpediente" class="modal hidden">
-        <div class="modal-content large">
-            <div class="modal-header">
-                <h2 id="expedienteTitulo">Expediente</h2>
-                <button class="modal-close" id="closeModalExpediente">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div id="expedienteContent"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Scripts -->
-    <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
     <script src="app.js"></script>
 </body>
 </html>
