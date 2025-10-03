@@ -1,10 +1,9 @@
-// Sistema GlassDrive Multi-taller - JavaScript Completo
-// Versión optimizada y funcional para GitHub Pages
+// Sistema GlassDrive - Versión Simplificada para Centros Específicos
+// Acceso directo sin usuario, solo por centro
 
 class GlassDriveApp {
     constructor() {
         // Estado de la aplicación
-        this.currentUser = null;
         this.currentTaller = null;
         this.currentStep = 1;
         this.totalSteps = 3;
@@ -15,16 +14,12 @@ class GlassDriveApp {
         this.tesseractWorker = null;
         this.photoCounter = 1;
 
-        // Datos GlassDrive
+        // Centros GlassDrive específicos para pruebas
         this.talleres = [
-            { id: 'mad-norte', nombre: 'Madrid Norte', direccion: 'C/ Bravo Murillo 123' },
-            { id: 'mad-sur', nombre: 'Madrid Sur', direccion: 'A-42 Km 15' },
-            { id: 'bcn-centro', nombre: 'Barcelona Centro', direccion: 'Av. Diagonal 456' },
-            { id: 'bcn-norte', nombre: 'Barcelona Norte', direccion: 'Ronda Guinardó 789' },
-            { id: 'val-este', nombre: 'Valencia Este', direccion: 'CV-35 Salida 12' },
-            { id: 'sev-norte', nombre: 'Sevilla Norte', direccion: 'A-4 Km 532' },
-            { id: 'bil-centro', nombre: 'Bilbao Centro', direccion: 'Gran Vía 89' },
-            { id: 'zar-oeste', nombre: 'Zaragoza Oeste', direccion: 'A-2 Km 315' }
+            { id: 'monzon', nombre: 'Monzón', direccion: 'Av. Lérida, 45' },
+            { id: 'barbastro', nombre: 'Barbastro', direccion: 'C/ Somontano, 23' },
+            { id: 'lleida', nombre: 'Lleida', direccion: 'Av. Catalunya, 67' },
+            { id: 'fraga', nombre: 'Fraga', direccion: 'C/ Zaragoza, 12' }
         ];
 
         this.servicios = [
@@ -61,12 +56,11 @@ class GlassDriveApp {
     }
 
     init() {
-        console.log('🚀 Iniciando GlassDrive App...');
+        console.log('🚀 Iniciando GlassDrive App Simplificada...');
         this.loadStoredData();
         this.setupEventListeners();
-        this.populateTallerSelect();
         this.initializeTesseract();
-        console.log('✅ GlassDrive App iniciada correctamente');
+        console.log('✅ App iniciada - Centros: Monzón, Barbastro, Lleida, Fraga');
     }
 
     resetExpedient() {
@@ -87,13 +81,13 @@ class GlassDriveApp {
             estado: 'recepcion',
             fecha_registro: new Date().toISOString(),
             taller_info: null,
-            usuario_registro: null
+            centro_registro: null
         };
     }
 
     loadStoredData() {
         try {
-            const stored = localStorage.getItem('glassdrive_expedientes');
+            const stored = localStorage.getItem('glassdrive_expedientes_centros');
             this.expedientes = stored ? JSON.parse(stored) : this.getInitialData();
             console.log(`📊 Cargados ${this.expedientes.length} expedientes`);
         } catch (error) {
@@ -105,65 +99,53 @@ class GlassDriveApp {
     getInitialData() {
         return [
             {
-                id: 'GD2025001',
-                matricula: '2468BCD',
-                fecha_registro: '2025-09-25',
-                taller: { id: 'mad-norte', nombre: 'Madrid Norte' },
-                usuario_registro: 'Carlos Martinez',
-                cliente: { nombre: 'Ana Rodriguez Lopez', telefono: '644987123' },
-                vehiculo: { marca: 'Volkswagen', modelo: 'Golf', año: 2021, color: 'Gris' },
+                id: 'MZ2025001',
+                matricula: '1234ABC',
+                fecha_registro: '2025-10-01',
+                taller: { id: 'monzon', nombre: 'Monzón' },
+                centro_registro: 'Monzón',
+                cliente: { nombre: 'Juan García López', telefono: '645123456' },
+                vehiculo: { marca: 'Seat', modelo: 'León', año: 2020, color: 'Blanco' },
                 servicio: 'Sustitución parabrisas',
                 estado: 'diagnostico',
                 fotos: ['frontal.jpg', 'lateral.jpg'],
-                confidence_ocr: 97.2
+                confidence_ocr: 96.8
             },
             {
-                id: 'GD2025002',
-                matricula: '7890XYZ',
-                fecha_registro: '2025-09-24',
-                taller: { id: 'bcn-centro', nombre: 'Barcelona Centro' },
-                usuario_registro: 'Maria Santos',
-                cliente: { nombre: 'Miguel Fernandez Ruiz', telefono: '622445566' },
-                vehiculo: { marca: 'Seat', modelo: 'Ateca', año: 2020, color: 'Blanco' },
+                id: 'BB2025001',
+                matricula: '5678DEF',
+                fecha_registro: '2025-10-02',
+                taller: { id: 'barbastro', nombre: 'Barbastro' },
+                centro_registro: 'Barbastro',
+                cliente: { nombre: 'María Pérez Ruiz', telefono: '634567890' },
+                vehiculo: { marca: 'Volkswagen', modelo: 'Polo', año: 2019, color: 'Azul' },
                 servicio: 'Reparación impacto',
                 estado: 'completado',
                 fotos: ['frontal.jpg', 'detalle.jpg'],
-                confidence_ocr: 95.1
+                confidence_ocr: 94.2
+            },
+            {
+                id: 'LL2025001',
+                matricula: '9012GHI',
+                fecha_registro: '2025-10-01',
+                taller: { id: 'lleida', nombre: 'Lleida' },
+                centro_registro: 'Lleida',
+                cliente: { nombre: 'Carlos Martín Silva', telefono: '698765432' },
+                vehiculo: { marca: 'Ford', modelo: 'Focus', año: 2021, color: 'Gris' },
+                servicio: 'Cambio luna lateral',
+                estado: 'reparacion',
+                fotos: ['frontal.jpg', 'lateral.jpg', 'detalle.jpg'],
+                confidence_ocr: 98.1
             }
         ];
     }
 
     saveData() {
         try {
-            localStorage.setItem('glassdrive_expedientes', JSON.stringify(this.expedientes));
+            localStorage.setItem('glassdrive_expedientes_centros', JSON.stringify(this.expedientes));
             console.log('💾 Datos guardados correctamente');
         } catch (error) {
             console.error('❌ Error guardando datos:', error);
-        }
-    }
-
-    populateTallerSelect() {
-        const select = document.getElementById('selectTaller');
-        const filterSelect = document.getElementById('filterTaller');
-
-        if (select) {
-            select.innerHTML = '<option value="">Seleccione su taller...</option>';
-            this.talleres.forEach(taller => {
-                const option = document.createElement('option');
-                option.value = taller.id;
-                option.textContent = taller.nombre;
-                select.appendChild(option);
-            });
-        }
-
-        if (filterSelect) {
-            filterSelect.innerHTML = '<option value="">Todos los talleres</option>';
-            this.talleres.forEach(taller => {
-                const option = document.createElement('option');
-                option.value = taller.id;
-                option.textContent = taller.nombre;
-                filterSelect.appendChild(option);
-            });
         }
     }
 
@@ -174,7 +156,7 @@ class GlassDriveApp {
                 this.tesseractWorker = await Tesseract.createWorker();
                 await this.tesseractWorker.loadLanguage('spa');
                 await this.tesseractWorker.initialize('spa');
-                console.log('✅ Tesseract.js listo para OCR');
+                console.log('✅ OCR listo para matrícula y documentos');
             } else {
                 console.warn('⚠️ Tesseract.js no disponible');
             }
@@ -184,7 +166,7 @@ class GlassDriveApp {
     }
 
     setupEventListeners() {
-        // Login
+        // Login simplificado (solo centro)
         const loginForm = document.getElementById('loginForm');
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => {
@@ -243,6 +225,19 @@ class GlassDriveApp {
             capturePhoto.addEventListener('click', () => this.capturePhoto());
         }
 
+        // Subir fotos desde archivo
+        const selectPhoto = document.getElementById('selectPhoto');
+        if (selectPhoto) {
+            selectPhoto.addEventListener('click', () => {
+                document.getElementById('uploadPhoto').click();
+            });
+        }
+
+        const uploadPhoto = document.getElementById('uploadPhoto');
+        if (uploadPhoto) {
+            uploadPhoto.addEventListener('change', (e) => this.handlePhotoUpload(e));
+        }
+
         // Documentos
         const selectDocument = document.getElementById('selectDocument');
         if (selectDocument) {
@@ -297,18 +292,14 @@ class GlassDriveApp {
 
     handleLogin() {
         const tallerSelect = document.getElementById('selectTaller');
-        const usuarioInput = document.getElementById('inputUsuario');
-
         const tallerId = tallerSelect.value;
-        const usuario = usuarioInput.value.trim();
 
-        if (!tallerId || !usuario) {
-            alert('Por favor, seleccione un taller e ingrese su nombre');
+        if (!tallerId) {
+            alert('Por favor, seleccione un centro GlassDrive');
             return;
         }
 
         this.currentTaller = this.talleres.find(t => t.id === tallerId);
-        this.currentUser = usuario;
 
         // Ocultar login y mostrar app
         document.getElementById('loginScreen').classList.remove('active');
@@ -319,11 +310,10 @@ class GlassDriveApp {
         this.updateDashboard();
         this.showDashboard();
 
-        console.log(`👤 Usuario: ${usuario} - Taller: ${this.currentTaller.nombre}`);
+        console.log(`🏢 Acceso a centro: ${this.currentTaller.nombre}`);
     }
 
     handleLogout() {
-        this.currentUser = null;
         this.currentTaller = null;
 
         document.getElementById('mainApp').classList.remove('active');
@@ -337,18 +327,15 @@ class GlassDriveApp {
 
     updateUserInfo() {
         const userInfo = document.getElementById('userInfo');
-        if (userInfo && this.currentUser && this.currentTaller) {
-            userInfo.textContent = `${this.currentUser} - ${this.currentTaller.nombre}`;
+        if (userInfo && this.currentTaller) {
+            userInfo.textContent = `Centro: ${this.currentTaller.nombre}`;
         }
     }
 
     showDashboard() {
-        // Ocultar todas las secciones
         document.querySelectorAll('.content-section').forEach(section => {
             section.classList.remove('active');
         });
-
-        // Mostrar dashboard
         document.getElementById('dashboard').classList.add('active');
     }
 
@@ -356,9 +343,8 @@ class GlassDriveApp {
         document.querySelectorAll('.content-section').forEach(section => {
             section.classList.remove('active');
         });
-
         document.getElementById('busqueda').classList.add('active');
-        this.performSearch(); // Cargar resultados iniciales
+        this.performSearch();
     }
 
     updateDashboard() {
@@ -409,7 +395,7 @@ class GlassDriveApp {
             item.innerHTML = `
                 <div>
                     <strong>${exp.matricula}</strong> - ${exp.cliente ? exp.cliente.nombre : 'Cliente N/A'}
-                    <br><small>${exp.taller ? exp.taller.nombre : 'Taller N/A'} - ${exp.servicio || 'Servicio N/A'}</small>
+                    <br><small>${exp.centro_registro || 'Centro N/A'} - ${exp.servicio || 'Servicio N/A'}</small>
                 </div>
                 <div class="badge badge-${exp.estado || 'recepcion'}">${exp.estado || 'recepcion'}</div>
             `;
@@ -427,18 +413,15 @@ class GlassDriveApp {
     }
 
     closeRegistroModal() {
-        // Detener cámara si está activa
         if (this.cameraStream) {
             this.cameraStream.getTracks().forEach(track => track.stop());
             this.cameraStream = null;
         }
-
         document.getElementById('registroModal').classList.remove('active');
         console.log('❌ Modal de registro cerrado');
     }
 
     updateWizardStep() {
-        // Actualizar indicadores de paso
         document.querySelectorAll('.step').forEach((step, index) => {
             if (index + 1 === this.currentStep) {
                 step.classList.add('active');
@@ -447,7 +430,6 @@ class GlassDriveApp {
             }
         });
 
-        // Mostrar/ocultar pasos
         document.querySelectorAll('.wizard-step').forEach((step, index) => {
             if (index + 1 === this.currentStep) {
                 step.classList.add('active');
@@ -456,7 +438,6 @@ class GlassDriveApp {
             }
         });
 
-        // Actualizar botones
         const prevBtn = document.getElementById('prevStep');
         const nextBtn = document.getElementById('nextStep');
         const finishBtn = document.getElementById('finishRegistro');
@@ -529,7 +510,6 @@ class GlassDriveApp {
 
         ctx.drawImage(preview, 0, 0);
 
-        // Convertir a blob y agregar a fotos
         canvas.toBlob((blob) => {
             const photoUrl = URL.createObjectURL(blob);
             const photoData = {
@@ -542,13 +522,37 @@ class GlassDriveApp {
             this.currentExpedient.fotos.push(photoData);
             this.updatePhotosGrid();
 
-            // Si es la primera foto, procesarla con OCR
             if (this.currentExpedient.fotos.length === 1) {
                 this.processMatricula(photoData);
             }
 
             console.log(`📸 Foto capturada (${this.currentExpedient.fotos.length})`);
         }, 'image/jpeg', 0.8);
+    }
+
+    handlePhotoUpload(event) {
+        const files = Array.from(event.target.files);
+
+        files.forEach(file => {
+            const photoUrl = URL.createObjectURL(file);
+            const photoData = {
+                id: this.photoCounter++,
+                url: photoUrl,
+                blob: file,
+                timestamp: new Date().toISOString(),
+                name: file.name
+            };
+
+            this.currentExpedient.fotos.push(photoData);
+        });
+
+        this.updatePhotosGrid();
+
+        if (this.currentExpedient.fotos.length > 0) {
+            this.processMatricula(this.currentExpedient.fotos[0]);
+        }
+
+        console.log(`📸 ${files.length} foto(s) subidas`);
     }
 
     updatePhotosGrid() {
@@ -571,17 +575,12 @@ class GlassDriveApp {
             photoDiv.addEventListener('click', () => {
                 this.currentExpedient.foto_frontal_index = index;
                 this.updatePhotosGrid();
-
-                // Procesar nueva foto frontal con OCR
-                if (this.currentExpedient.fotos[index]) {
-                    this.processMatricula(this.currentExpedient.fotos[index]);
-                }
+                this.processMatricula(this.currentExpedient.fotos[index]);
             });
 
             grid.appendChild(photoDiv);
         });
 
-        // Mostrar selector si hay múltiples fotos
         if (this.currentExpedient.fotos.length > 1 && selector && options) {
             selector.style.display = 'block';
             options.innerHTML = '';
@@ -608,12 +607,12 @@ class GlassDriveApp {
 
     async processMatricula(photoData) {
         if (!this.tesseractWorker || !photoData) {
-            console.warn('⚠️ OCR no disponible o foto no válida');
+            console.warn('⚠️ OCR no disponible');
             return;
         }
 
         try {
-            console.log('🔍 Procesando matrícula con OCR...');
+            console.log('🔍 Procesando matrícula...');
 
             const ocrResult = document.getElementById('ocrResults');
             const matriculaResult = document.getElementById('matriculaResult');
@@ -628,7 +627,6 @@ class GlassDriveApp {
                 tessedit_pageseg_mode: 8
             });
 
-            // Buscar patrón de matrícula española
             const cleanText = text.replace(/\s+/g, ' ').toUpperCase();
             const matriculaMatch = cleanText.match(/[0-9]{4}[BCDFGHJKLMNPRSTVWXYZ]{3}/);
 
@@ -646,19 +644,15 @@ class GlassDriveApp {
                     `;
                 }
 
-                console.log(`✅ Matrícula detectada: ${matricula} (${confidence.toFixed(1)}%)`);
+                console.log(`✅ Matrícula: ${matricula} (${confidence.toFixed(1)}%)`);
             } else {
                 if (ocrResult) {
-                    ocrResult.innerHTML = '<div class="error">No se pudo detectar una matrícula válida</div>';
+                    ocrResult.innerHTML = '<div class="error">No se detectó matrícula válida</div>';
                 }
-                console.warn('⚠️ No se detectó matrícula válida');
+                console.warn('⚠️ Matrícula no detectada');
             }
         } catch (error) {
-            console.error('❌ Error en OCR de matrícula:', error);
-            const ocrResult = document.getElementById('ocrResults');
-            if (ocrResult) {
-                ocrResult.innerHTML = '<div class="error">Error procesando imagen</div>';
-            }
+            console.error('❌ Error en OCR:', error);
         }
     }
 
@@ -675,7 +669,6 @@ class GlassDriveApp {
         const preview = document.getElementById(previewId);
         const dataSection = document.getElementById(dataId);
 
-        // Mostrar vista previa
         if (preview) {
             preview.style.display = 'block';
 
@@ -683,15 +676,15 @@ class GlassDriveApp {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     preview.innerHTML = `
-                        <h4>Vista previa del documento:</h4>
-                        <img src="${e.target.result}" alt="Documento" style="max-width: 100%; max-height: 300px;">
+                        <h4>Vista previa:</h4>
+                        <img src="${e.target.result}" alt="Documento">
                         <p><strong>Archivo:</strong> ${file.name}</p>
                     `;
                 };
                 reader.readAsDataURL(file);
             } else if (file.type === 'application/pdf') {
                 preview.innerHTML = `
-                    <h4>Documento PDF cargado:</h4>
+                    <h4>Documento PDF:</h4>
                     <div class="pdf-info">
                         📄 ${file.name}<br>
                         Tamaño: ${(file.size / 1024 / 1024).toFixed(2)} MB
@@ -700,14 +693,12 @@ class GlassDriveApp {
             }
         }
 
-        // Guardar archivo en expediente
         if (type === 'ficha') {
             this.currentExpedient.ficha_tecnica = file;
         } else {
             this.currentExpedient.poliza_seguro = file;
         }
 
-        // Procesar con OCR (simulado para esta demo)
         setTimeout(() => {
             this.simulateDocumentExtraction(type, dataSection, document.getElementById(gridId));
         }, 1000);
@@ -722,27 +713,24 @@ class GlassDriveApp {
 
         if (type === 'ficha') {
             extractedData = {
-                'Marca': 'Volkswagen',
-                'Modelo': 'Golf',
+                'Marca': 'Seat',
+                'Modelo': 'León',
                 'Matrícula': this.currentExpedient.matricula || '1234ABC',
-                'Bastidor': 'WVWZZZ1KZ2W123456',
-                'Potencia': '150 CV',
+                'Bastidor': 'VSSZZZ5FZ1R123456',
+                'Potencia': '110 CV',
                 'Cilindrada': '1598 cc',
                 'Combustible': 'Gasolina',
-                'Año': '2021',
-                'Plazas': '5'
+                'Año': '2020'
             };
             this.currentExpedient.datos_extraidos.ficha = extractedData;
         } else {
             extractedData = {
                 'Aseguradora': 'Mapfre',
-                'Número Póliza': 'MAP123456789',
-                'Asegurado': this.currentUser || 'Cliente',
+                'Número Póliza': 'MAP987654321',
                 'Matrícula': this.currentExpedient.matricula || '1234ABC',
                 'Vigencia Desde': '15/06/2024',
                 'Vigencia Hasta': '15/06/2025',
-                'Cobertura': 'Todo riesgo',
-                'Franquicia': '300 €'
+                'Cobertura': 'Todo riesgo'
             };
             this.currentExpedient.datos_extraidos.poliza = extractedData;
         }
@@ -758,11 +746,10 @@ class GlassDriveApp {
             grid.appendChild(dataItem);
         });
 
-        console.log(`✅ Datos extraídos de ${type}:`, extractedData);
+        console.log(`✅ Datos extraídos de ${type}`);
     }
 
     finishRegistro() {
-        // Validar datos mínimos
         if (!this.currentExpedient.matricula) {
             alert('Debe capturar al menos una foto frontal con matrícula');
             return;
@@ -778,38 +765,36 @@ class GlassDriveApp {
             return;
         }
 
-        // Generar ID único
-        this.currentExpedient.id = 'GD' + Date.now();
+        // Generar ID único por centro
+        const centroPrefix = this.currentTaller.id.substring(0, 2).toUpperCase();
+        this.currentExpedient.id = centroPrefix + Date.now();
         this.currentExpedient.fecha_registro = new Date().toISOString();
         this.currentExpedient.taller_info = this.currentTaller;
-        this.currentExpedient.usuario_registro = this.currentUser;
+        this.currentExpedient.centro_registro = this.currentTaller.nombre;
         this.currentExpedient.estado = 'recepcion';
 
-        // Simular datos de cliente y vehículo desde datos extraídos
         this.currentExpedient.cliente = {
-            nombre: this.currentExpedient.datos_extraidos.poliza['Asegurado'] || 'Cliente N/A',
+            nombre: 'Cliente Nuevo',
             telefono: '600000000',
             email: 'cliente@email.com'
         };
 
         this.currentExpedient.vehiculo = {
-            marca: this.currentExpedient.datos_extraidos.ficha['Marca'] || 'Marca N/A',
-            modelo: this.currentExpedient.datos_extraidos.ficha['Modelo'] || 'Modelo N/A',
+            marca: this.currentExpedient.datos_extraidos.ficha['Marca'] || 'N/A',
+            modelo: this.currentExpedient.datos_extraidos.ficha['Modelo'] || 'N/A',
             año: parseInt(this.currentExpedient.datos_extraidos.ficha['Año']) || new Date().getFullYear(),
-            color: 'Color N/A',
+            color: 'N/A',
             bastidor: this.currentExpedient.datos_extraidos.ficha['Bastidor'] || 'N/A'
         };
 
-        // Agregar a lista y guardar
         this.expedientes.push(this.currentExpedient);
         this.saveData();
 
-        // Cerrar modal y actualizar dashboard
         this.closeRegistroModal();
         this.updateDashboard();
         this.showDashboard();
 
-        alert(`✅ Expediente ${this.currentExpedient.id} creado exitosamente para la matrícula ${this.currentExpedient.matricula}`);
+        alert(`✅ Expediente ${this.currentExpedient.id} registrado en ${this.currentTaller.nombre}`);
 
         console.log('✅ Registro completado:', this.currentExpedient);
     }
@@ -828,7 +813,6 @@ class GlassDriveApp {
 
         let results = this.expedientes;
 
-        // Filtrar por texto
         if (query) {
             results = results.filter(exp => 
                 (exp.matricula && exp.matricula.toLowerCase().includes(query)) ||
@@ -837,17 +821,14 @@ class GlassDriveApp {
             );
         }
 
-        // Filtrar por taller
         if (tallerFilter) {
-            results = results.filter(exp => exp.taller_info && exp.taller_info.id === tallerFilter);
+            results = results.filter(exp => exp.taller && exp.taller.id === tallerFilter);
         }
 
-        // Filtrar por estado
         if (estadoFilter) {
             results = results.filter(exp => exp.estado === estadoFilter);
         }
 
-        // Mostrar resultados
         resultsContainer.innerHTML = '';
 
         if (results.length === 0) {
@@ -862,17 +843,16 @@ class GlassDriveApp {
                 <h4>${exp.matricula || 'Sin matrícula'}</h4>
                 <p><strong>Cliente:</strong> ${exp.cliente ? exp.cliente.nombre : 'N/A'}</p>
                 <p><strong>Vehículo:</strong> ${exp.vehiculo ? `${exp.vehiculo.marca} ${exp.vehiculo.modelo}` : 'N/A'}</p>
-                <p><strong>Taller:</strong> ${exp.taller_info ? exp.taller_info.nombre : 'N/A'}</p>
+                <p><strong>Centro:</strong> ${exp.centro_registro || 'N/A'}</p>
                 <p><strong>Estado:</strong> <span class="badge badge-${exp.estado || 'recepcion'}">${exp.estado || 'recepcion'}</span></p>
                 <p><strong>Fecha:</strong> ${new Date(exp.fecha_registro || Date.now()).toLocaleDateString('es-ES')}</p>
-                ${exp.confidence_ocr ? `<p><strong>Confianza OCR:</strong> ${exp.confidence_ocr.toFixed(1)}%</p>` : ''}
             `;
 
             card.addEventListener('click', () => this.showExpediente(exp));
             resultsContainer.appendChild(card);
         });
 
-        console.log(`🔍 Búsqueda completada: ${results.length} resultados`);
+        console.log(`🔍 ${results.length} resultados encontrados`);
     }
 
     showExpediente(expediente) {
@@ -892,7 +872,6 @@ class GlassDriveApp {
                     <p><strong>Marca:</strong> ${expediente.vehiculo ? expediente.vehiculo.marca : 'N/A'}</p>
                     <p><strong>Modelo:</strong> ${expediente.vehiculo ? expediente.vehiculo.modelo : 'N/A'}</p>
                     <p><strong>Año:</strong> ${expediente.vehiculo ? expediente.vehiculo.año : 'N/A'}</p>
-                    <p><strong>Color:</strong> ${expediente.vehiculo ? expediente.vehiculo.color : 'N/A'}</p>
                     <p><strong>Bastidor:</strong> ${expediente.vehiculo ? expediente.vehiculo.bastidor : 'N/A'}</p>
                 </div>
 
@@ -900,17 +879,14 @@ class GlassDriveApp {
                     <h3>Información del Cliente</h3>
                     <p><strong>Nombre:</strong> ${expediente.cliente ? expediente.cliente.nombre : 'N/A'}</p>
                     <p><strong>Teléfono:</strong> ${expediente.cliente ? expediente.cliente.telefono : 'N/A'}</p>
-                    <p><strong>Email:</strong> ${expediente.cliente ? expediente.cliente.email : 'N/A'}</p>
                 </div>
 
                 <div class="info-section">
                     <h3>Información del Servicio</h3>
-                    <p><strong>Taller:</strong> ${expediente.taller_info ? expediente.taller_info.nombre : 'N/A'}</p>
-                    <p><strong>Usuario Registro:</strong> ${expediente.usuario_registro || 'N/A'}</p>
+                    <p><strong>Centro:</strong> ${expediente.centro_registro || 'N/A'}</p>
                     <p><strong>Fecha Registro:</strong> ${new Date(expediente.fecha_registro || Date.now()).toLocaleString('es-ES')}</p>
                     <p><strong>Estado:</strong> <span class="badge badge-${expediente.estado || 'recepcion'}">${expediente.estado || 'recepcion'}</span></p>
                     <p><strong>Servicio:</strong> ${expediente.servicio || 'N/A'}</p>
-                    ${expediente.confidence_ocr ? `<p><strong>Confianza OCR:</strong> ${expediente.confidence_ocr.toFixed(1)}%</p>` : ''}
                 </div>
 
                 <div class="info-section">
@@ -924,7 +900,6 @@ class GlassDriveApp {
 
         modal.classList.add('active');
 
-        // Setup close button
         const closeBtn = document.getElementById('closeExpedienteModal');
         if (closeBtn) {
             closeBtn.onclick = () => modal.classList.remove('active');
@@ -934,18 +909,18 @@ class GlassDriveApp {
     }
 }
 
-// Inicializar aplicación cuando el DOM esté listo
+// Inicializar aplicación
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🌟 Iniciando sistema GlassDrive...');
+    console.log('🌟 Iniciando GlassDrive - Centros: Monzón, Barbastro, Lleida, Fraga');
     window.glassDriveApp = new GlassDriveApp();
 });
 
-// Manejo de errores global
+// Manejo de errores
 window.addEventListener('error', function(event) {
-    console.error('❌ Error de aplicación:', event.error);
+    console.error('❌ Error:', event.error);
 });
 
-// Cerrar modales al hacer clic fuera
+// Cerrar modales
 document.addEventListener('click', function(event) {
     if (event.target.classList.contains('modal')) {
         event.target.classList.remove('active');
