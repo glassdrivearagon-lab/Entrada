@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recepción GlassDrive - Acceso Simplificado</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Tesseract.js para OCR -->
-    <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></scriptglas
+    <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
+    <!-- PDF.js para procesar PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Pantalla de Login -->
+    <!-- Pantalla de Login Simplificada -->
     <div id="loginScreen" class="login-screen active">
         <div class="login-container">
             <div class="login-header">
@@ -22,29 +23,28 @@
                         <p class="app-name">Sistema Multi-taller</p>
                     </div>
                 </div>
-                <p class="tagline">Seleccione su taller y usuario para continuar</p>
+                <p class="tagline">Seleccione su taller para continuar</p>
             </div>
 
             <form class="login-form" id="loginForm">
                 <div class="form-group">
-                    <label for="selectTaller">Taller GlassDrive</label>
+                    <label for="selectTaller">Centro GlassDrive</label>
                     <select id="selectTaller" required>
-                        <option value="">Seleccione su taller...</option>
+                        <option value="">Seleccione su centro...</option>
+                        <option value="monzon">Monzón</option>
+                        <option value="barbastro">Barbastro</option>
+                        <option value="lleida">Lleida</option>
+                        <option value="fraga">Fraga</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="inputUsuario">Nombre de Usuario</label>
-                    <input type="text" id="inputUsuario" placeholder="Ingrese su nombre" required>
-                </div>
-
                 <button type="submit" class="btn-login">
-                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                    <i class="fas fa-sign-in-alt"></i> Acceder al Sistema
                 </button>
 
                 <div class="info-note">
                     <i class="fas fa-info-circle"></i>
-                    El sistema permite consultar expedientes de TODOS los talleres de la red
+                    Acceso directo por centro - Sistema de pruebas
                 </div>
             </form>
         </div>
@@ -58,7 +58,7 @@
                 <img src="logo.png" alt="GlassDrive" class="header-logo">
                 <div class="header-text">
                     <h1>GlassDrive Recepción</h1>
-                    <div class="user-info" id="userInfo">Usuario - Taller</div>
+                    <div class="user-info" id="userInfo">Centro seleccionado</div>
                 </div>
             </div>
             <div class="header-actions">
@@ -136,7 +136,7 @@
         <div id="busqueda" class="content-section">
             <div class="search-header">
                 <h2>Búsqueda de Expedientes</h2>
-                <p>Consulte expedientes de todos los talleres GlassDrive</p>
+                <p>Consulte expedientes de todos los centros GlassDrive</p>
             </div>
 
             <div class="search-controls">
@@ -149,7 +149,11 @@
 
                 <div class="search-filters">
                     <select id="filterTaller">
-                        <option value="">Todos los talleres</option>
+                        <option value="">Todos los centros</option>
+                        <option value="monzon">Monzón</option>
+                        <option value="barbastro">Barbastro</option>
+                        <option value="lleida">Lleida</option>
+                        <option value="fraga">Fraga</option>
                     </select>
                     <select id="filterEstado">
                         <option value="">Todos los estados</option>
@@ -203,6 +207,10 @@
                             </button>
                             <button id="capturePhoto" class="btn btn-secondary" style="display:none;">
                                 <i class="fas fa-camera-retro"></i> Capturar Foto
+                            </button>
+                            <input type="file" id="uploadPhoto" accept="image/*" multiple style="display:none;">
+                            <button id="selectPhoto" class="btn btn-secondary">
+                                <i class="fas fa-upload"></i> Subir Fotos
                             </button>
                         </div>
 
