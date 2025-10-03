@@ -405,12 +405,19 @@ class GlassDriveApp {
     }
 
     openRegistroModal() {
-        this.currentExpedient = this.resetExpedient();
-        this.currentStep = 1;
-        this.updateWizardStep();
-        document.getElementById('registroModal').classList.add('active');
-        console.log('📝 Modal de registro abierto');
-    }
+    this.currentExpedient = this.resetExpedient();
+    this.currentStep = 1;
+    this.updateWizardStep();
+
+    // MOSTRAR MODAL
+    document.getElementById('registroModal').classList.add('tive');
+
+    // ⚡ INICIAR CÁMARA EN CUANTO SE ABRE EL PASO 1
+    this.startCamera();
+
+    console.log('📝 Modal de registro abierto');
+}
+
 
     closeRegistroModal() {
         if (this.cameraStream) {
@@ -750,54 +757,52 @@ class GlassDriveApp {
     }
 
     finishRegistro() {
-        if (!this.currentExpedient.matricula) {
-            alert('Debe capturar al menos una foto frontal con matrícula');
-            return;
-        }
-
-        if (!this.currentExpedient.ficha_tecnica) {
-            alert('Debe subir la ficha técnica del vehículo');
-            return;
-        }
-
-        if (!this.currentExpedient.poliza_seguro) {
-            alert('Debe subir la póliza de seguro');
-            return;
-        }
-
-        // Generar ID único por centro
-        const centroPrefix = this.currentTaller.id.substring(0, 2).toUpperCase();
-        this.currentExpedient.id = centroPrefix + Date.now();
-        this.currentExpedient.fecha_registro = new Date().toISOString();
-        this.currentExpedient.taller_info = this.currentTaller;
-        this.currentExpedient.centro_registro = this.currentTaller.nombre;
-        this.currentExpedient.estado = 'recepcion';
-
-        this.currentExpedient.cliente = {
-            nombre: 'Cliente Nuevo',
-            telefono: '600000000',
-            email: 'cliente@email.com'
-        };
-
-        this.currentExpedient.vehiculo = {
-            marca: this.currentExpedient.datos_extraidos.ficha['Marca'] || 'N/A',
-            modelo: this.currentExpedient.datos_extraidos.ficha['Modelo'] || 'N/A',
-            año: parseInt(this.currentExpedient.datos_extraidos.ficha['Año']) || new Date().getFullYear(),
-            color: 'N/A',
-            bastidor: this.currentExpedient.datos_extraidos.ficha['Bastidor'] || 'N/A'
-        };
-
-        this.expedientes.push(this.currentExpedient);
-        this.saveData();
-
-        this.closeRegistroModal();
-        this.updateDashboard();
-        this.showDashboard();
-
-        alert(`✅ Expediente ${this.currentExpedient.id} registrado en ${this.currentTaller.nombre}`);
-
-        console.log('✅ Registro completado:', this.currentExpedient);
+    // Validaciones mínimas
+    if (!this.currentExpedient.matricula) {
+        alert('Primero debe capturar una foto frontal y detectar la matrícula.');
+        return;
     }
+    if (!this.currentExpedient.ficha_tecnica) {
+        alert('Debe subir la ficha técnica del vehículo.');
+        return;
+    }
+    if (!this.currentExpedient.poliza_seguro) {
+        alert('Debe subir la póliza de seguro.');
+        return;
+    }
+
+    /* 📌  NUEVO CÓDIGO
+       El ID del expediente será la matrícula, de modo que el
+       propio nombre de la carpeta quede 100 % alineado con la
+       foto frontal y con el índice global.
+    */
+    this.currentExpedient.id = this.currentExpedient.matricula.toUpperCase();
+    this.currentExpedient.fecha_registro = new Date().toISOString();
+    this.currentExpedient.taller_info   = this.currentTaller;
+    this.currentExpedient.centro_registro = this.currentTaller.nombre;
+    this.currentExpedient.estado = 'recepcion';
+
+    // Datos simulados de cliente / vehículo para pruebas
+    this.currentExpedient.cliente = {
+        nombre: this.currentExpedient.datos_extraidos.poliza.Asegurado || 'Cliente',
+        telefono: '600000000'
+    };
+    this.currentExpedient.vehiculo = {
+        marca : this.currentExpedient.datos_extraidos.ficha.Marca  || 'N/A',
+        modelo: this.currentExpedient.datos_extraidos.ficha.Modelo || 'N/A',
+        año   : parseInt(this.currentExpedient.datos_extraidos.ficha.Año) || new Date().getFullYear()
+    };
+
+    // 👉 Guardar y actualizar
+    this.expedientes.push(this.currentExpedient);
+    this.saveData();
+    this.closeRegistroModal();
+    this.updateDashboard();
+    this.showDashboard();
+
+    alert(`✅ Expediente ${this.currentExpedient.id} creado correctamente`);
+    console.log('✅ Registro finalizado:', this.currentExpedient);
+}
 
     performSearch() {
         const searchInput = document.getElementById('searchInput');
