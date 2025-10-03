@@ -409,14 +409,13 @@ class GlassDriveApp {
     this.currentStep = 1;
     this.updateWizardStep();
 
-    // MOSTRAR MODAL
-    document.getElementById('registroModal').classList.add('tive');
-
-    // ⚡ INICIAR CÁMARA EN CUANTO SE ABRE EL PASO 1
-    this.startCamera();
-
+    // Mostrar el modal
+    document.getElementById('registroModal').classList.add('active');
+    // Abrir la cámara automáticamente al abrir el modal
+    setTimeout(() => this.startCamera(), 300);
     console.log('📝 Modal de registro abierto');
 }
+
 
 
     closeRegistroModal() {
@@ -479,31 +478,33 @@ class GlassDriveApp {
     }
 
     async startCamera() {
-        try {
-            console.log('📷 Iniciando cámara...');
-            this.cameraStream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                }
-            });
-
-            const preview = document.getElementById('cameraPreview');
-            const startBtn = document.getElementById('startCamera');
-            const captureBtn = document.getElementById('capturePhoto');
-
-            if (preview && startBtn && captureBtn) {
-                preview.srcObject = this.cameraStream;
-                preview.style.display = 'block';
-                startBtn.style.display = 'none';
-                captureBtn.style.display = 'block';
-                console.log('✅ Cámara iniciada');
-            }
-        } catch (error) {
-            console.error('❌ Error accediendo a la cámara:', error);
-            alert('No se pudo acceder a la cámara. Verifique los permisos.');
+    try {
+        // Detén cámara previa si la hubiera
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(track => track.stop());
         }
+
+        this.cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" }
+        });
+
+        const preview = document.getElementById('cameraPreview');
+        const captureBtn = document.getElementById('capturePhoto');
+
+        if (preview && captureBtn) {
+            preview.srcObject = this.cameraStream;
+            preview.style.display = "block";
+            if(typeof preview.play === "function") preview.play();
+            captureBtn.style.display = "block";
+            console.log('✅ Cámara trasera iniciada');
+        } else {
+            alert('No se encuentra el elemento de video en la interfaz.');
+        }
+    } catch (error) {
+        console.error('❌ Error accediendo a la cámara:', error);
+        alert('No se pudo acceder a la cámara. Da permiso cuando el navegador lo pida.');
     }
+}
 
     capturePhoto() {
         const preview = document.getElementById('cameraPreview');
